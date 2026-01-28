@@ -884,7 +884,7 @@
       apis.forEach(api => {
         if (!api.billingType || !api.capStatus) {
           // Detect billing type based on known APIs
-          if (api.url?.includes('twitterapi.io')) {
+          if (api.url?.includes('twitterapi.io') || api.url?.includes('brave')) {
             api.billingType = 'prepaid';
             api.capStatus = 'no-cap-needed';
           } else if (api.name?.toLowerCase().includes('max') || api.rate === 0) {
@@ -1240,10 +1240,9 @@
     function loadPresets() {
       const presets = [
         { id: 'twitter-1', name: 'Twitter API', url: 'twitterapi.io', icon: '🐦', color: '#3b82f6', rate: 0.15, budget: 10, billingType: 'prepaid', capStatus: 'no-cap-needed' },
-        { id: 'anthropic-1', name: 'Claude (Anthropic)', url: 'console.anthropic.com', icon: '🧠', color: '#d97706', rate: 3.00, budget: 50, billingType: 'postpaid', capStatus: 'needs-action' },
+        { id: 'brave-1', name: 'Brave Search API', url: 'brave.com/search/api', icon: '🦁', color: '#fb542b', rate: 3.00, budget: 10, billingType: 'prepaid', capStatus: 'no-cap-needed' },
         { id: 'anthropic-max', name: 'Claude Code Max', url: 'console.anthropic.com', icon: '🧠', color: '#d97706', rate: 0, budget: 200, billingType: 'flat', capStatus: 'no-cap-needed' },
-        { id: 'openai-1', name: 'OpenAI', url: 'platform.openai.com', icon: '🤖', color: '#10b981', rate: 2.50, budget: 50, billingType: 'postpaid', capStatus: 'needs-action' },
-        { id: 'clawdbot-1', name: 'Clawdbot Gateway', url: 'clawd.bot', icon: '🐱', color: '#8b5cf6', rate: 0, budget: 100, billingType: 'flat', capStatus: 'no-cap-needed' }
+        { id: 'clawdbot-1', name: 'Clawdbot Gateway', url: 'clawd.bot', icon: '🐱', color: '#8b5cf6', rate: 0, budget: 0, billingType: 'flat', capStatus: 'no-cap-needed' }
       ];
 
       const existingIds = apis.map(a => a.id);
