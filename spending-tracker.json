@@ -1,0 +1,11 @@
+{
+  "dailyBudget": 10.00,
+  "warningThreshold": 0.80,
+  "criticalThreshold": 0.95,
+  "today": {
+    "date": "2026-01-28",
+    "spent": 0,
+    "breakdown": {}
+  },
+  "history": []
+}
