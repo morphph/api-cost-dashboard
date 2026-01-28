@@ -584,6 +584,51 @@
       }
     }
 
+    /* Alert Banner */
+    .alert-banner {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%);
+      border: 1px solid var(--accent-red);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      animation: pulse-border 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% { border-color: var(--accent-red); }
+      50% { border-color: var(--accent-yellow); }
+    }
+
+    .alert-banner.warning {
+      border-color: var(--accent-yellow);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%);
+    }
+
+    .alert-icon {
+      font-size: 1.5rem;
+    }
+
+    .alert-text {
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .alert-dismiss {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1.25rem;
+      padding: 0.25rem;
+    }
+
+    .alert-dismiss:hover {
+      color: var(--text-primary);
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
@@ -626,6 +671,13 @@
       </div>
     </header>
 
+    <!-- Budget Alert Banner -->
+    <div class="alert-banner" id="alertBanner" style="display: none;">
+      <span class="alert-icon">⚠️</span>
+      <span class="alert-text" id="alertText"></span>
+      <button class="alert-dismiss" onclick="dismissAlert()">✕</button>
+    </div>
+
     <div class="stats-grid" id="statsGrid">
       <div class="stat-card">
         <div class="stat-label">Total Spend (This Month)</div>
@@ -638,14 +690,14 @@
         <div class="stat-change">Across all APIs</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Active APIs</div>
-        <div class="stat-value" id="activeApis">0</div>
-        <div class="stat-change" id="apiChange">Add your first API</div>
+        <div class="stat-label">Budget Status</div>
+        <div class="stat-value" id="budgetStatus">OK</div>
+        <div class="stat-change" id="budgetPercent">0% used</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Requests Today</div>
-        <div class="stat-value" id="todayRequests">0</div>
-        <div class="stat-change" id="requestChange">—</div>
+        <div class="stat-label">APIs Over 80%</div>
+        <div class="stat-value" id="warningApis">0</div>
+        <div class="stat-change" id="warningNames">All within budget</div>
       </div>
     </div>
 
@@ -825,14 +877,68 @@
     function renderStats() {
       const totalSpend = apis.reduce((sum, api) => sum + (api.spent || 0), 0);
       const totalCredits = apis.reduce((sum, api) => sum + (api.credits || 0), 0);
-      const activeCount = apis.filter(a => a.status === 'active').length;
-      const todayReqs = apis.reduce((sum, api) => sum + (api.requests || 0), 0);
+      const totalBudget = apis.reduce((sum, api) => sum + (api.budget || 0), 0);
+      
+      // Find APIs over budget thresholds
+      const warningApis = apis.filter(api => {
+        if (!api.budget || api.budget === 0) return false;
+        const percent = (api.spent || 0) / api.budget * 100;
+        return percent >= 80;
+      });
+      
+      const criticalApis = apis.filter(api => {
+        if (!api.budget || api.budget === 0) return false;
+        const percent = (api.spent || 0) / api.budget * 100;
+        return percent >= 95;
+      });
+
+      const overallPercent = totalBudget > 0 ? (totalSpend / totalBudget * 100) : 0;
 
       document.getElementById('totalSpend').textContent = '$' + totalSpend.toFixed(2);
       document.getElementById('totalCredits').textContent = '$' + totalCredits.toFixed(2);
-      document.getElementById('activeApis').textContent = activeCount;
-      document.getElementById('todayRequests').textContent = todayReqs.toLocaleString();
-      document.getElementById('apiChange').textContent = `${apis.length} total tracked`;
+      
+      // Budget status
+      const statusEl = document.getElementById('budgetStatus');
+      const percentEl = document.getElementById('budgetPercent');
+      
+      if (criticalApis.length > 0) {
+        statusEl.textContent = '🚨 CRITICAL';
+        statusEl.style.color = 'var(--accent-red)';
+      } else if (warningApis.length > 0) {
+        statusEl.textContent = '⚠️ WARNING';
+        statusEl.style.color = 'var(--accent-yellow)';
+      } else {
+        statusEl.textContent = '✅ OK';
+        statusEl.style.color = 'var(--accent-green)';
+      }
+      percentEl.textContent = `${overallPercent.toFixed(0)}% of total budget`;
+
+      // Warning APIs count
+      document.getElementById('warningApis').textContent = warningApis.length;
+      document.getElementById('warningApis').style.color = warningApis.length > 0 ? 'var(--accent-yellow)' : 'var(--accent-green)';
+      document.getElementById('warningNames').textContent = warningApis.length > 0 
+        ? warningApis.map(a => a.name.split(' ')[0]).join(', ')
+        : 'All within budget';
+
+      // Show alert banner if needed
+      const alertBanner = document.getElementById('alertBanner');
+      const alertText = document.getElementById('alertText');
+      
+      if (criticalApis.length > 0) {
+        alertBanner.style.display = 'flex';
+        alertBanner.classList.remove('warning');
+        alertText.textContent = `CRITICAL: ${criticalApis.map(a => a.name).join(', ')} at 95%+ of budget!`;
+      } else if (warningApis.length > 0) {
+        alertBanner.style.display = 'flex';
+        alertBanner.classList.add('warning');
+        alertText.textContent = `Warning: ${warningApis.map(a => a.name).join(', ')} approaching budget limit (80%+)`;
+      } else {
+        alertBanner.style.display = 'none';
+      }
+    }
+    
+    function dismissAlert() {
+      document.getElementById('alertBanner').style.display = 'none';
     }
 
     function renderApis() {
