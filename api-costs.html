@@ -611,6 +611,12 @@
         <h1>API Costs <span>/ Dashboard</span></h1>
       </div>
       <div class="header-actions">
+        <button class="btn btn-secondary" onclick="loadPresets()">
+          ⚡ Presets
+        </button>
+        <button class="btn btn-secondary" onclick="importData()">
+          ↑ Import
+        </button>
         <button class="btn btn-secondary" onclick="exportData()">
           ↓ Export
         </button>
@@ -742,22 +748,66 @@
     let apis = JSON.parse(localStorage.getItem('apiCosts_apis') || '[]');
     let history = JSON.parse(localStorage.getItem('apiCosts_history') || '[]');
 
-    // Initialize with Twitter API if empty
+    // Initialize with default APIs if empty
     if (apis.length === 0) {
-      apis = [{
-        id: 'twitter-1',
-        name: 'Twitter API',
-        url: 'twitterapi.io',
-        icon: '🐦',
-        color: '#3b82f6',
-        credits: 0.10,
-        spent: 0,
-        rate: 0.15,
-        budget: 10,
-        requests: 0,
-        status: 'active',
-        createdAt: new Date().toISOString()
-      }];
+      apis = [
+        {
+          id: 'twitter-1',
+          name: 'Twitter API',
+          url: 'twitterapi.io',
+          icon: '🐦',
+          color: '#3b82f6',
+          credits: 0.10,
+          spent: 0,
+          rate: 0.15,
+          budget: 10,
+          requests: 0,
+          status: 'active',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'anthropic-1',
+          name: 'Claude (Anthropic)',
+          url: 'console.anthropic.com',
+          icon: '🧠',
+          color: '#d97706',
+          credits: 0,
+          spent: 0,
+          rate: 3.00,  // ~$3/MTok input for Sonnet
+          budget: 50,
+          requests: 0,
+          status: 'active',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'openai-1',
+          name: 'OpenAI',
+          url: 'platform.openai.com',
+          icon: '🤖',
+          color: '#10b981',
+          credits: 0,
+          spent: 0,
+          rate: 2.50,  // ~$2.50/MTok for GPT-4o
+          budget: 50,
+          requests: 0,
+          status: 'active',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'clawdbot-1',
+          name: 'Clawdbot Gateway',
+          url: 'clawd.bot',
+          icon: '🐱',
+          color: '#8b5cf6',
+          credits: 0,
+          spent: 0,
+          rate: 0,
+          budget: 100,
+          requests: 0,
+          status: 'active',
+          createdAt: new Date().toISOString()
+        }
+      ];
       saveData();
     }
 
@@ -995,6 +1045,65 @@
       a.download = `api-costs-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
+    }
+
+    function importData() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (data.apis) apis = data.apis;
+            if (data.history) history = data.history;
+            saveData();
+            render();
+            alert('Data imported successfully!');
+          } catch (err) {
+            alert('Invalid JSON file');
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    function loadPresets() {
+      const presets = [
+        { id: 'twitter-1', name: 'Twitter API', url: 'twitterapi.io', icon: '🐦', color: '#3b82f6', rate: 0.15, budget: 10 },
+        { id: 'anthropic-1', name: 'Claude (Anthropic)', url: 'console.anthropic.com', icon: '🧠', color: '#d97706', rate: 3.00, budget: 50 },
+        { id: 'openai-1', name: 'OpenAI', url: 'platform.openai.com', icon: '🤖', color: '#10b981', rate: 2.50, budget: 50 },
+        { id: 'clawdbot-1', name: 'Clawdbot Gateway', url: 'clawd.bot', icon: '🐱', color: '#8b5cf6', rate: 0, budget: 100 }
+      ];
+
+      const existingIds = apis.map(a => a.id);
+      let added = 0;
+
+      presets.forEach(preset => {
+        if (!existingIds.includes(preset.id)) {
+          apis.push({
+            ...preset,
+            credits: 0,
+            spent: 0,
+            requests: 0,
+            status: 'active',
+            createdAt: new Date().toISOString()
+          });
+          added++;
+        }
+      });
+
+      if (added > 0) {
+        saveData();
+        render();
+        alert(`Added ${added} new API(s)!`);
+      } else {
+        alert('All presets already added');
+      }
     }
 
     // Close modal on overlay click
