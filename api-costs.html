@@ -878,7 +878,33 @@
       localStorage.setItem('apiCosts_history', JSON.stringify(history));
     }
 
+    // Auto-migrate old data missing billingType/capStatus
+    function migrateData() {
+      let migrated = false;
+      apis.forEach(api => {
+        if (!api.billingType || !api.capStatus) {
+          // Detect billing type based on known APIs
+          if (api.url?.includes('twitterapi.io')) {
+            api.billingType = 'prepaid';
+            api.capStatus = 'no-cap-needed';
+          } else if (api.name?.toLowerCase().includes('max') || api.rate === 0) {
+            api.billingType = 'flat';
+            api.capStatus = 'no-cap-needed';
+          } else if (api.url?.includes('clawd')) {
+            api.billingType = 'flat';
+            api.capStatus = 'no-cap-needed';
+          } else {
+            api.billingType = api.billingType || 'postpaid';
+            api.capStatus = api.capStatus || 'needs-action';
+          }
+          migrated = true;
+        }
+      });
+      if (migrated) saveData();
+    }
+
     function render() {
+      migrateData();
       renderStats();
       renderApis();
       renderHistory();
