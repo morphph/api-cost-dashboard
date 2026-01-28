@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Cost Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #16161f;
+      --bg-card-hover: #1a1a25;
+      --border: #2a2a3a;
+      --border-glow: #3b82f6;
+      --text-primary: #e4e4eb;
+      --text-secondary: #8888a0;
+      --text-muted: #55556a;
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-yellow: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
+      --gradient-1: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      --gradient-2: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: 
+        radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.04) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--gradient-1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .logo h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .logo span {
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .btn {
+      font-family: 'Outfit', sans-serif;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--gradient-1);
+      color: white;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--text-muted);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(59, 130, 246, 0.1);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-1);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .stat-card:hover::before {
+      opacity: 1;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value.green { color: var(--accent-green); }
+    .stat-value.yellow { color: var(--accent-yellow); }
+    .stat-value.red { color: var(--accent-red); }
+    .stat-value.blue { color: var(--accent-blue); }
+
+    .stat-change {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .stat-change.up { color: var(--accent-green); }
+    .stat-change.down { color: var(--accent-red); }
+
+    /* API Cards */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 500;
+    }
+
+    .api-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .api-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      transition: all 0.3s ease;
+    }
+
+    .api-card:hover {
+      border-color: var(--border-glow);
+      box-shadow: 0 8px 30px rgba(59, 130, 246, 0.1);
+    }
+
+    .api-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+    }
+
+    .api-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .api-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .api-name {
+      font-weight: 500;
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .api-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .api-status {
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .api-status.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+    }
+
+    .api-status.warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-yellow);
+    }
+
+    .api-status.inactive {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-red);
+    }
+
+    .api-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .metric {
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    .usage-bar {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      height: 8px;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+
+    .usage-fill {
+      height: 100%;
+      border-radius: 8px;
+      transition: width 0.5s ease;
+    }
+
+    .usage-fill.low { background: var(--accent-green); }
+    .usage-fill.medium { background: var(--accent-yellow); }
+    .usage-fill.high { background: var(--accent-red); }
+
+    .api-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .api-actions .btn {
+      flex: 1;
+      justify-content: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 500px;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .modal-actions .btn {
+      flex: 1;
+      justify-content: center;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: var(--bg-card);
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      margin-bottom: 3rem;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    /* History Table */
+    .history-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      overflow: hidden;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .history-table th,
+    .history-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .history-table th {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+
+    .history-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .history-table td {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+
+    .history-api {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .history-api-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+    }
+
+    .cost-negative {
+      color: var(--accent-red);
+    }
+
+    .cost-positive {
+      color: var(--accent-green);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .api-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">📊</div>
+        <h1>API Costs <span>/ Dashboard</span></h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" onclick="exportData()">
+          ↓ Export
+        </button>
+        <button class="btn btn-primary" onclick="openModal()">
+          + Add API
+        </button>
+      </div>
+    </header>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-label">Total Spend (This Month)</div>
+        <div class="stat-value blue" id="totalSpend">$0.00</div>
+        <div class="stat-change" id="spendChange">No data yet</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Credits Remaining</div>
+        <div class="stat-value green" id="totalCredits">$0.00</div>
+        <div class="stat-change">Across all APIs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active APIs</div>
+        <div class="stat-value" id="activeApis">0</div>
+        <div class="stat-change" id="apiChange">Add your first API</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Requests Today</div>
+        <div class="stat-value" id="todayRequests">0</div>
+        <div class="stat-change" id="requestChange">—</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <h2 class="section-title">Your APIs</h2>
+    </div>
+
+    <div id="apiContainer">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-state-icon">🔌</div>
+        <h3>No APIs tracked yet</h3>
+        <p>Add your first API to start tracking costs and usage</p>
+        <button class="btn btn-primary" onclick="openModal()">+ Add API</button>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <h2 class="section-title">Recent Activity</h2>
+    </div>
+
+    <div class="history-section">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>API</th>
+            <th>Action</th>
+            <th>Units</th>
+            <th>Cost</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody">
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted);">No activity recorded yet</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Add API</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <form id="apiForm" onsubmit="saveApi(event)">
+        <input type="hidden" id="apiId">
+        <div class="form-group">
+          <label class="form-label">API Name</label>
+          <input type="text" class="form-input" id="apiName" placeholder="e.g., Twitter API" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Provider URL</label>
+          <input type="text" class="form-input" id="apiUrl" placeholder="e.g., twitterapi.io">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Icon (emoji)</label>
+            <input type="text" class="form-input" id="apiIcon" placeholder="🐦" maxlength="4">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Color</label>
+            <select class="form-select" id="apiColor">
+              <option value="#3b82f6">Blue</option>
+              <option value="#06b6d4">Cyan</option>
+              <option value="#10b981">Green</option>
+              <option value="#f59e0b">Yellow</option>
+              <option value="#ef4444">Red</option>
+              <option value="#8b5cf6">Purple</option>
+              <option value="#ec4899">Pink</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Starting Credits ($)</label>
+            <input type="number" class="form-input" id="apiCredits" step="0.01" placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cost per 1K units ($)</label>
+            <input type="number" class="form-input" id="apiRate" step="0.01" placeholder="0.15">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monthly Budget ($)</label>
+          <input type="number" class="form-input" id="apiBudget" step="0.01" placeholder="10.00">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save API</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Data store
+    let apis = JSON.parse(localStorage.getItem('apiCosts_apis') || '[]');
+    let history = JSON.parse(localStorage.getItem('apiCosts_history') || '[]');
+
+    // Initialize with Twitter API if empty
+    if (apis.length === 0) {
+      apis = [{
+        id: 'twitter-1',
+        name: 'Twitter API',
+        url: 'twitterapi.io',
+        icon: '🐦',
+        color: '#3b82f6',
+        credits: 0.10,
+        spent: 0,
+        rate: 0.15,
+        budget: 10,
+        requests: 0,
+        status: 'active',
+        createdAt: new Date().toISOString()
+      }];
+      saveData();
+    }
+
+    function saveData() {
+      localStorage.setItem('apiCosts_apis', JSON.stringify(apis));
+      localStorage.setItem('apiCosts_history', JSON.stringify(history));
+    }
+
+    function render() {
+      renderStats();
+      renderApis();
+      renderHistory();
+    }
+
+    function renderStats() {
+      const totalSpend = apis.reduce((sum, api) => sum + (api.spent || 0), 0);
+      const totalCredits = apis.reduce((sum, api) => sum + (api.credits || 0), 0);
+      const activeCount = apis.filter(a => a.status === 'active').length;
+      const todayReqs = apis.reduce((sum, api) => sum + (api.requests || 0), 0);
+
+      document.getElementById('totalSpend').textContent = '$' + totalSpend.toFixed(2);
+      document.getElementById('totalCredits').textContent = '$' + totalCredits.toFixed(2);
+      document.getElementById('activeApis').textContent = activeCount;
+      document.getElementById('todayRequests').textContent = todayReqs.toLocaleString();
+      document.getElementById('apiChange').textContent = `${apis.length} total tracked`;
+    }
+
+    function renderApis() {
+      const container = document.getElementById('apiContainer');
+      const emptyState = document.getElementById('emptyState');
+
+      if (apis.length === 0) {
+        container.innerHTML = '';
+        container.appendChild(emptyState);
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      const grid = document.createElement('div');
+      grid.className = 'api-grid';
+
+      apis.forEach(api => {
+        const usagePercent = api.budget > 0 ? (api.spent / api.budget) * 100 : 0;
+        const usageClass = usagePercent > 80 ? 'high' : usagePercent > 50 ? 'medium' : 'low';
+        const statusClass = api.status || 'active';
+
+        grid.innerHTML += `
+          <div class="api-card">
+            <div class="api-header">
+              <div class="api-info">
+                <div class="api-icon" style="background: ${api.color}22; color: ${api.color}">
+                  ${api.icon || '🔌'}
+                </div>
+                <div>
+                  <div class="api-name">${api.name}</div>
+                  <div class="api-url">${api.url || '—'}</div>
+                </div>
+              </div>
+              <div class="api-status ${statusClass}">${statusClass}</div>
+            </div>
+            <div class="api-metrics">
+              <div class="metric">
+                <div class="metric-label">Credits Left</div>
+                <div class="metric-value" style="color: ${api.credits > 1 ? 'var(--accent-green)' : 'var(--accent-yellow)'}">$${(api.credits || 0).toFixed(2)}</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Spent</div>
+                <div class="metric-value">$${(api.spent || 0).toFixed(2)}</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Rate</div>
+                <div class="metric-value">$${api.rate || 0}/1K</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Requests</div>
+                <div class="metric-value">${(api.requests || 0).toLocaleString()}</div>
+              </div>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+              Budget: $${api.spent?.toFixed(2) || '0.00'} / $${api.budget?.toFixed(2) || '0.00'}
+            </div>
+            <div class="usage-bar">
+              <div class="usage-fill ${usageClass}" style="width: ${Math.min(usagePercent, 100)}%"></div>
+            </div>
+            <div class="api-actions">
+              <button class="btn btn-secondary" onclick="logUsage('${api.id}')">+ Log Usage</button>
+              <button class="btn btn-secondary" onclick="editApi('${api.id}')">Edit</button>
+              <button class="btn btn-secondary" onclick="deleteApi('${api.id}')" style="color: var(--accent-red)">✕</button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = '';
+      container.appendChild(grid);
+    }
+
+    function renderHistory() {
+      const tbody = document.getElementById('historyBody');
+
+      if (history.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No activity recorded yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = history.slice(0, 10).map(h => {
+        const api = apis.find(a => a.id === h.apiId) || { icon: '🔌', name: 'Unknown', color: '#888' };
+        return `
+          <tr>
+            <td>${new Date(h.date).toLocaleDateString()}</td>
+            <td>
+              <div class="history-api">
+                <div class="history-api-icon" style="background: ${api.color}22; color: ${api.color}">${api.icon}</div>
+                ${api.name}
+              </div>
+            </td>
+            <td>${h.action}</td>
+            <td>${h.units?.toLocaleString() || '—'}</td>
+            <td class="${h.cost > 0 ? 'cost-negative' : 'cost-positive'}">
+              ${h.cost > 0 ? '-' : '+'}$${Math.abs(h.cost || 0).toFixed(4)}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openModal(id = null) {
+      const modal = document.getElementById('modalOverlay');
+      const title = document.getElementById('modalTitle');
+      const form = document.getElementById('apiForm');
+
+      if (id) {
+        const api = apis.find(a => a.id === id);
+        if (api) {
+          title.textContent = 'Edit API';
+          document.getElementById('apiId').value = api.id;
+          document.getElementById('apiName').value = api.name;
+          document.getElementById('apiUrl').value = api.url || '';
+          document.getElementById('apiIcon').value = api.icon || '';
+          document.getElementById('apiColor').value = api.color || '#3b82f6';
+          document.getElementById('apiCredits').value = api.credits || '';
+          document.getElementById('apiRate').value = api.rate || '';
+          document.getElementById('apiBudget').value = api.budget || '';
+        }
+      } else {
+        title.textContent = 'Add API';
+        form.reset();
+        document.getElementById('apiId').value = '';
+      }
+
+      modal.classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+    }
+
+    function editApi(id) {
+      openModal(id);
+    }
+
+    function saveApi(e) {
+      e.preventDefault();
+
+      const id = document.getElementById('apiId').value || 'api-' + Date.now();
+      const apiData = {
+        id,
+        name: document.getElementById('apiName').value,
+        url: document.getElementById('apiUrl').value,
+        icon: document.getElementById('apiIcon').value || '🔌',
+        color: document.getElementById('apiColor').value,
+        credits: parseFloat(document.getElementById('apiCredits').value) || 0,
+        rate: parseFloat(document.getElementById('apiRate').value) || 0,
+        budget: parseFloat(document.getElementById('apiBudget').value) || 0,
+        spent: 0,
+        requests: 0,
+        status: 'active',
+        createdAt: new Date().toISOString()
+      };
+
+      const existingIdx = apis.findIndex(a => a.id === id);
+      if (existingIdx >= 0) {
+        apiData.spent = apis[existingIdx].spent || 0;
+        apiData.requests = apis[existingIdx].requests || 0;
+        apis[existingIdx] = apiData;
+      } else {
+        apis.push(apiData);
+      }
+
+      saveData();
+      render();
+      closeModal();
+    }
+
+    function deleteApi(id) {
+      if (confirm('Delete this API?')) {
+        apis = apis.filter(a => a.id !== id);
+        saveData();
+        render();
+      }
+    }
+
+    function logUsage(id) {
+      const units = prompt('Number of units (e.g., tweets, requests):');
+      if (!units) return;
+
+      const api = apis.find(a => a.id === id);
+      if (!api) return;
+
+      const numUnits = parseInt(units);
+      const cost = (numUnits / 1000) * api.rate;
+
+      api.spent = (api.spent || 0) + cost;
+      api.credits = Math.max(0, (api.credits || 0) - cost);
+      api.requests = (api.requests || 0) + numUnits;
+
+      history.unshift({
+        date: new Date().toISOString(),
+        apiId: id,
+        action: 'API Call',
+        units: numUnits,
+        cost: cost
+      });
+
+      saveData();
+      render();
+    }
+
+    function exportData() {
+      const data = { apis, history, exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `api-costs-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Close modal on overlay click
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
