@@ -3,9 +3,19 @@
   "warningThreshold": 0.80,
   "criticalThreshold": 0.95,
   "today": {
-    "date": "2026-01-28",
-    "spent": 0,
-    "breakdown": {}
+    "date": "2026-01-29",
+    "spent": 0.009659999999999995,
+    "breakdown": {
+      "twitter": 0.009659999999999995
+    }
   },
-  "history": []
+  "history": [
+    {
+      "date": "2026-01-28",
+      "spent": 0.00015,
+      "breakdown": {
+        "twitter": 0.00015
+      }
+    }
+  ]
 }

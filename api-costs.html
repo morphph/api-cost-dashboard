@@ -1335,10 +1335,16 @@
 
     function loadPresets() {
       const presets = [
+        // API Services
         { id: 'twitter-1', name: 'Twitter API', url: 'twitterapi.io', icon: '🐦', color: '#3b82f6', rate: 0.15, budget: 10, billingType: 'prepaid', capStatus: 'no-cap-needed' },
         { id: 'brave-1', name: 'Brave Search (Free)', url: 'brave.com/search/api', icon: '🦁', color: '#fb542b', rate: 0, budget: 0, billingType: 'free', capStatus: 'no-cap-needed', freeQuota: '2000 queries/mo' },
         { id: 'anthropic-max', name: 'Claude Code Max', url: 'console.anthropic.com', icon: '🧠', color: '#d97706', rate: 0, budget: 200, billingType: 'flat', capStatus: 'no-cap-needed', trackTokens: true, tokensIn: 0, tokensOut: 0 },
-        { id: 'clawdbot-1', name: 'Clawdbot Gateway', url: 'clawd.bot', icon: '🐱', color: '#8b5cf6', rate: 0, budget: 0, billingType: 'flat', capStatus: 'no-cap-needed' }
+        { id: 'openai-1', name: 'OpenAI (Transcription)', url: 'platform.openai.com', icon: '🤖', color: '#10b981', rate: 0.003, budget: 5, billingType: 'usage', capStatus: 'no-cap-needed', notes: 'gpt-4o-mini-transcribe ~$0.003/min' },
+        { id: 'gemini-1', name: 'Google Gemini', url: 'aistudio.google.com', icon: '🔷', color: '#4285f4', rate: 0, budget: 0, billingType: 'free', capStatus: 'no-cap-needed', freeQuota: 'Free tier', notes: 'LoreAI deep research' },
+        { id: 'clawdbot-1', name: 'Clawdbot Gateway', url: 'clawd.bot', icon: '🐱', color: '#8b5cf6', rate: 0, budget: 0, billingType: 'flat', capStatus: 'no-cap-needed' },
+        // Infrastructure
+        { id: 'aws-ec2', name: 'AWS EC2 + EBS', url: 'console.aws.amazon.com', icon: '☁️', color: '#f59e0b', rate: 0, budget: 71, billingType: 'usage', capStatus: 'no-cap-needed', notes: 'm7i-flex.large (2vCPU/8GB) us-east-1 $0.096/hr ≈ $69/mo + 20GB gp3 $1.60/mo' },
+        { id: 'domain-1', name: 'Domain (Annual)', url: '', icon: '🌐', color: '#06b6d4', rate: 0, budget: 15, billingType: 'flat', capStatus: 'no-cap-needed', notes: 'Annual domain renewal ~$10-15/yr' }
       ];
 
       const existingIds = apis.map(a => a.id);
